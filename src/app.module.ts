@@ -1,7 +1,7 @@
-import { CronType } from '@daechanjo/models';
 import { PlaywrightModule } from '@daechanjo/playwright';
 import { RabbitMQModule } from '@daechanjo/rabbitmq';
 import { UtilModule } from '@daechanjo/util';
+import { BullModule } from '@nestjs/bull';
 import { Module, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -24,6 +24,27 @@ import { TypeormConfig } from './config/typeorm.config';
     RedisModule.forRootAsync({
       useFactory: () => redisConfig,
     }),
+    BullModule.registerQueueAsync({
+      name: 'register-bull-queue',
+      useFactory: async (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('REDIS_HOST'),
+          port: configService.get<number>('REDIS_PORT'),
+        },
+        prefix: '{bull}',
+        defaultJobOptions: {
+          removeOnComplete: true,
+          removeOnFail: true,
+          attempts: 3,
+          backoff: 30000,
+        },
+        limiter: {
+          max: 1,
+          duration: 1000,
+        },
+      }),
+      inject: [ConfigService],
+    }),
     UtilModule,
     PlaywrightModule,
     RabbitMQModule,
@@ -35,17 +56,9 @@ export class AppModule implements OnApplicationBootstrap {
   constructor(
     @InjectRedis() private readonly redis: Redis,
     private readonly configService: ConfigService,
-    // private readonly priceService: PriceService,
-    // private readonly priceCoupangService: PriceCoupangService,
-    // private readonly priceRepository: PriceRepository,
   ) {}
 
   async onApplicationBootstrap() {
-    setTimeout(async () => {
-      // await this.redis.del(`lock:${this.configService.get<string>('STORE')}:coupang:price`);
-      // await this.redis.del(`lock:${this.configService.get<string>('STORE')}:naver:price`);
-      // await this.priceCoupangService.calculateMarginAndAdjustPrices('test', CronType.PRICE);
-      // await this.priceService.initCoupangPriceControl();
-    }, 100);
+    setTimeout(async () => {}, 100);
   }
 }

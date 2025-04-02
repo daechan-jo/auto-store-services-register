@@ -1,39 +1,61 @@
-// import { CronType } from '@daechanjo/models';
-// import { Process, Processor } from '@nestjs/bull';
-// import { Injectable } from '@nestjs/common';
-// import { Job } from 'bull';
+import { Process, Processor } from '@nestjs/bull';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import { Job } from 'bull';
+import Redis from 'ioredis';
 
+@Processor('register-bull-queue') // 큐 이름
+@Injectable()
+export class MessageQueueProcessor {
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectRedis() private readonly redis: Redis,
+  ) {} // private readonly coupangCrawlerService: CoupangCrawlerService
 
-// @Processor('register-bull-queue') // 큐 이름
-// @Injectable()
-// export class MessageQueueProcessor {
-// 	constructor(
-// 		// private readonly coupangCrawlerService: CoupangCrawlerService
-// 	) {}
-//
-// 	@Process('register-message') // 작업 이름
-// 	async processMessage(job: Job) {
-// 		const { pattern, payload } = job.data;
-//
-// 		console.log(`${payload.type}${payload.cronId}: 🔥${pattern}`);
-//
-// 		try {
-// 			switch (pattern) {
-// 				// case 'orderStatusUpdate':
-// 				// 	await this.coupangCrawlerService.orderStatusUpdate(payload.cronId, payload.type);
-// 				// 	break;
-// 				//
-//
-// 				default:
-// 					console.warn(
-// 						`${CronType.ERROR}${payload.type}${payload.cronId}: 알 수 없는 패턴 ${pattern}`,
-// 					);
-// 			}
-// 		} catch (error: any) {
-// 			console.error(
-// 				`${CronType.ERROR}${payload.type}${payload.cronId}: 🔥${pattern}\n`,
-// 				error.response?.data || error.message,
-// 			);
-// 		}
-// 	}
-// }
+  @Process({ name: 'product-registration', concurrency: 1 }) // 작업 이름
+  async productRegistration(job: Job) {
+    const { pattern, payload } = job.data;
+    const retryDelay = 60000;
+    let acquired = false;
+    let attemptCount = 0;
+    const crawlingLockKey = `lock:${this.configService.get<string>('STORE')}:coupang:price:crawl`;
+
+    console.log(`${payload.type}${payload.cronId}: 🔥${pattern} - 작업 시작 시도`);
+
+    // 락을 획득할 때까지 무한 시도
+    while (!acquired) {
+      const result = await this.redis.set(crawlingLockKey, Date.now().toString(), 'NX');
+      acquired = result === 'OK';
+
+      if (!acquired) {
+        attemptCount++;
+        console.log(
+          `${payload.type}${payload.cronId}: 락 획득 시도 중... (시도 횟수: ${attemptCount})`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelay)); // 대기
+      }
+    }
+
+    try {
+      // 락 획득 성공 시 작업 처리
+      console.log(
+        `${payload.type}${payload.cronId}: 락 획득 성공 (${attemptCount}번 시도 후), 작업 처리 중`,
+      );
+      console.log(
+        `락 획득 성공 (${attemptCount}번 시도 후), 작업 처리 중: ${payload.type}${payload.cronId}`,
+      );
+
+      // todo 여기에 실제 제품 등록 로직 구현
+
+      // 작업 완료 후 의도적인 지연
+      await this.redis.del(crawlingLockKey);
+      console.log(`${payload.type}${payload.cronId}: 작업 완료, 의도적 지연 시작 (2분)`);
+      await new Promise((resolve) => setTimeout(resolve, 120000));
+
+      return { success: true, message: '제품 등록 완료' };
+    } finally {
+      await this.redis.del(crawlingLockKey);
+    }
+  }
+}
