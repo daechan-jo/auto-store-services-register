@@ -9,7 +9,7 @@ import { RegisterService } from './register.service';
 
 @Processor('register-bull-queue') // 큐 이름
 @Injectable()
-export class MessageQueueProcessor {
+export class RegisterQueueProcessor {
   constructor(
     private readonly configService: ConfigService,
     private readonly registerService: RegisterService,

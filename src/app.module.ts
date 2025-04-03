@@ -9,8 +9,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { InjectRedis, RedisModule } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 
+import { RegisterMessageController } from './api/register.message.controller';
 import { redisConfig } from './config/redis.config';
 import { TypeormConfig } from './config/typeorm.config';
+import { RegisterQueueProcessor } from './core/register.queue.processor';
+import { RegisterService } from './core/register.service';
 
 @Module({
   imports: [
@@ -49,16 +52,20 @@ import { TypeormConfig } from './config/typeorm.config';
     PlaywrightModule,
     RabbitMQModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [RegisterMessageController],
+  providers: [RegisterService, RegisterQueueProcessor],
 })
 export class AppModule implements OnApplicationBootstrap {
   constructor(
     @InjectRedis() private readonly redis: Redis,
     private readonly configService: ConfigService,
+    private readonly registerService: RegisterService,
   ) {}
 
   async onApplicationBootstrap() {
-    setTimeout(async () => {}, 100);
+    setTimeout(async () => {
+      // const result = await this.registerService.getWaitingJobs();
+      // console.log(JSON.stringify(result, null, 2));
+    }, 100);
   }
 }
