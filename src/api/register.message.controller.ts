@@ -1,26 +1,21 @@
 import { JobType, RabbitmqMessage } from '@daechanjo/models';
-import { InjectQueue } from '@nestjs/bull';
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { Queue } from 'bull';
 
 import { RegisterService } from '../core/register.service';
 
 @Controller()
 export class RegisterMessageController {
-  constructor(
-    private readonly registerService: RegisterService,
-    @InjectQueue('register-bull-queue') private readonly registerBullQueue: Queue,
-  ) {}
+  constructor(private readonly registerService: RegisterService) {}
 
   @MessagePattern('register-queue')
   async handleRegisterMessage(message: RabbitmqMessage) {
     const { pattern, payload } = message;
-    console.log(`${payload.jobType}${payload.jobId}: 📥${pattern}`);
+    console.log(`${payload.jobType || 'API-Gateway'}${payload.jobId || ''}: 📥${pattern}`);
 
     switch (pattern) {
       case 'productRegistration':
-        await this.registerBullQueue.add('product-registration', message);
+        await this.registerService.productRegistration(payload.data);
         break;
 
       case 'getStatus':
