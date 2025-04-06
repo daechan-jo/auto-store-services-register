@@ -18,37 +18,37 @@ export class RegisterMessageController {
         await this.registerService.productRegistration(payload.data);
         break;
 
-      case 'getStatus':
-        const status = await this.registerService.getQueueStatus();
-        return { status: 'success', data: status };
-
-      case 'getWaitingJobs':
-        const waitingJobs = await this.registerService.getWaitingJobs();
-        return { status: 'success', data: waitingJobs };
-
-      case 'getActiveJobs':
-        const activeJobs = await this.registerService.getActiveJobs();
-        return { status: 'success', data: activeJobs };
-
-      case 'getCompletedJobs':
-        const completedJobs = await this.registerService.getCompletedJobs();
-        return { status: 'success', data: completedJobs };
-
-      case 'getFailedJobs':
-        const failedJobs = await this.registerService.getFailedJobs();
-        return { status: 'success', data: failedJobs };
-
-      case 'getDelayedJobs':
-        const delayedJobs = await this.registerService.getDelayedJobs();
-        return { status: 'success', data: delayedJobs };
-
-      case 'getAllJobs':
-        const allJobs = await this.registerService.getAllJobStatus();
-        return { status: 'success', data: allJobs };
-
-      case 'deleteJob':
-        await this.registerService.removeJob(payload.data);
-        return { status: 'success' };
+      // case 'getStatus':
+      //   const status = await this.registerService.getQueueStatus();
+      //   return { status: 'success', data: status };
+      //
+      // case 'getWaitingJobs':
+      //   const waitingJobs = await this.registerService.getWaitingJobs();
+      //   return { status: 'success', data: waitingJobs };
+      //
+      // case 'getActiveJobs':
+      //   const activeJobs = await this.registerService.getActiveJobs();
+      //   return { status: 'success', data: activeJobs };
+      //
+      // case 'getCompletedJobs':
+      //   const completedJobs = await this.registerService.getCompletedJobs();
+      //   return { status: 'success', data: completedJobs };
+      //
+      // case 'getFailedJobs':
+      //   const failedJobs = await this.registerService.getFailedJobs();
+      //   return { status: 'success', data: failedJobs };
+      //
+      // case 'getDelayedJobs':
+      //   const delayedJobs = await this.registerService.getDelayedJobs();
+      //   return { status: 'success', data: delayedJobs };
+      //
+      // case 'getAllJobs':
+      //   const allJobs = await this.registerService.getAllJobStatus();
+      //   return { status: 'success', data: allJobs };
+      //
+      // case 'deleteJob':
+      //   await this.registerService.removeJob(payload.data);
+      //   return { status: 'success' };
 
       // todo 사용할일이 있을까..?
       // @Post('add')
